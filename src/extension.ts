@@ -409,7 +409,7 @@ quickPick.onDidChangeValue(function (){
 
 export function activate(context: vscode.ExtensionContext){
 
-	context.subscriptions.push(commands.registerCommand('path-finder.showinput', function(){
+	context.subscriptions.push(commands.registerCommand('js-relative-path.showinput', function(){
 		if(!projectRoot){
 			var [newProjectRoot, newOpenedFilename] = getPaths();
 			projectRoot = newProjectRoot;
