@@ -1,0 +1,63 @@
+{
+	"name": "path-finder",
+	"displayName": "Path-Finder",
+	"description": "An easier way to locate files to import",
+	"version": "0.0.1",
+	"publisher": "RomuloVieira",
+	"license": "MIT License",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/romulorvs/path-finder"
+	},
+	"engines": {
+		"vscode": "^1.53.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"*"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "path-finder.showinput",
+				"title": "js/ts files",
+				"category": "Import"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "path-finder.showinput",
+				"win": "ctrl+alt+i",
+				"linux": "ctrl+alt+i",
+				"mac": "cmd+alt+i"
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"lint": "eslint src --ext ts",
+		"test": "node ./out/test/runTest.js"
+	},
+	"devDependencies": {
+		"@types/glob": "^7.1.3",
+		"@types/mocha": "^8.0.4",
+		"@types/node": "^12.11.7",
+		"@types/vscode": "^1.53.0",
+		"@typescript-eslint/eslint-plugin": "^4.14.1",
+		"@typescript-eslint/parser": "^4.14.1",
+		"eslint": "^7.19.0",
+		"jest": "^26.6.3",
+		"mocha": "^8.2.1",
+		"typescript": "^4.1.3",
+		"vscode-test": "^1.5.0"
+	},
+	"dependencies": {
+		"glob": "^7.1.6"
+	}
+}
