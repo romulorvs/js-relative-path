@@ -17,9 +17,18 @@ var getDirectories = async function(callback: any){
 			glob(
 				projectRoot + '/**/*',
 				{
+					dot: true, // hidden files
 					nosort: true,
 					mark: true,
 					ignore: [
+
+						/**
+						 * Folders
+						 */
+						// excluding hidden folders
+						projectRoot + '/.*/**/',
+						projectRoot + '/.*/**/*',
+						
 						projectRoot + '/NODE_MODULES/**',
 						projectRoot + '/node_modules/**',
 						projectRoot + '/COVERAGE/**',
@@ -38,19 +47,28 @@ var getDirectories = async function(callback: any){
 						projectRoot + '/public/**',
 						projectRoot + '/OUT/**',
 						projectRoot + '/out/**',
-						projectRoot + '/.*/**',
+						projectRoot + '/DIST/**',
+						projectRoot + '/dist/**',
+
+						/**
+						 * Root Files
+						 */
 						projectRoot + '/*LICENSE*',
 						projectRoot + '/*license*',
 						projectRoot + '/*config*',
 						projectRoot + '/*setup*',
 						projectRoot + '/*ignore*',
-						projectRoot + '/.*',
+						// projectRoot + '/.*', // files in the root that starts with dot (hidden files in the root dir)
 						projectRoot + '/*.tmpl',
 						projectRoot + '/*.lock',
 						projectRoot + '/*.json',
 						projectRoot + '/*.log',
 						projectRoot + '/*.md',
 						projectRoot + '/*.vsix',
+
+						/**
+						 * Max dir levels to search
+						 */
 						ignoreLevels
 					]
 				},
@@ -147,7 +165,8 @@ function setItemsFromFiles(files = storedFiles){
 		/**
 		 * To better sort the file's array, you should sort by the absolute filepath.
 		 * And for that to work properly, you need to set all the dir names in uppercase at the filepath,
-		 * and the filename to lowercase. pathToSort var will store this value.
+		 * and the filename to lowercase (this will help to keep the directories above them the files below).
+		 * pathToSort var will store this value.
 		 */
 		var pathToSort = filename;
 		if(isDir){
@@ -195,8 +214,8 @@ function setItemsFromFiles(files = storedFiles){
 
 		var labelNoIcon = isDir ? label.slice(0, -1) : label;
 		label = isDir
-				? `${storedDirs[file].isOpen ? '-' : '+'}📂${label.slice(0, -1)}`
-				: `📜${label}`;
+				? `📂 ${label.slice(0, -1)}`
+				: `$(file) ${label}`;
 
 		if(!isDir){
 			storedItemsFilter.push({
@@ -209,7 +228,7 @@ function setItemsFromFiles(files = storedFiles){
 
 		var foldersLength = dir.split('/').length - 2;
 		for (var i = 0; i < foldersLength; i++) {
-			label = '      ' + label;
+			label = '     ' + label;
 		}
 
 		let description = dir;
@@ -301,7 +320,12 @@ function getFileDataFromURL(url: string): [string,string,string] {
 	return [filenameWithoutExt, extension, filepathWithoutExt];
 }
 
-function importFile(file: string){
+function importFile(file: string, isDir: boolean = false){
+
+	if(isDir){
+		file = `${file}index.js`;
+	}
+
 	if(!openedFilename){return;}
 	var lastIndex = openedFilename.lastIndexOf('/');
 	var filepath = openedFilename.substring(0, lastIndex + 1);
@@ -341,16 +365,33 @@ function importFile(file: string){
 		
 		var fileType = activeTextEditor.document.languageId;
 		var [fileWithoutExt, fileExtension, filepathWithoutExt] = getFileDataFromURL(importUrl);
-		fileWithoutExt = fileWithoutExt.replace(/[^\A-Za-z0-9_$]+/g, '');
+		fileWithoutExt = fileWithoutExt.replace(/[^\A-Za-z0-9_$]+/g, ' ').split(' ').reduce((total, current, index) => {
+			if(index === 0 && !['jsx','tsx'].includes(fileExtension)) {
+				return `${total}${current}`;
+			}
+			const camelCaseWord = current.charAt(0).toUpperCase() + current.slice(1);
+			return `${total}${camelCaseWord}`;
+		}, '');
 		
 		var isImportJS = false;
 		if(
-			(fileType === 'javascript' && fileExtension === 'js') ||
-			(fileType === 'typescript' && ['js','ts','tsx'].includes(fileExtension)) ||
-			(fileType  === 'typescriptreact' && ['js','ts','tsx'].includes(fileExtension))
+			(fileType === 'javascript' && ['js','jsx',].includes(fileExtension)) ||
+			(fileType === 'javascriptreact' && ['js','jsx'].includes(fileExtension)) ||
+			(fileType === 'typescript' && ['js','jsx','ts','tsx'].includes(fileExtension)) ||
+			(fileType  === 'typescriptreact' && ['js','jsx','ts','tsx'].includes(fileExtension))
 		){
 			importUrl = filepathWithoutExt;
 			isImportJS = true;
+
+			if(fileWithoutExt === 'index'){
+				if(importUrl !== `./${fileWithoutExt}`){
+					importUrl = importUrl.substr(0, importUrl.lastIndexOf('/'));
+					fileWithoutExt = importUrl.substr(importUrl.lastIndexOf('/')+1);
+					if(fileWithoutExt === '.' || fileWithoutExt === '..'){
+						fileWithoutExt = 'index';
+					}
+				}
+			}
 		}
 
 		if(lineText.trim() || !isImportJS){ // if current line is not empty or imported file is not JS
@@ -398,9 +439,7 @@ quickPick.onDidChangeActive(function (selection){
 quickPick.onDidAccept(function(){
 	if(!currentFile) {return;}
 
-	if(!currentFile.isDir){
-		importFile(currentFile.filename);
-	}
+	importFile(currentFile.filename, currentFile.isDir);
 });
 
 quickPick.onDidChangeValue(function (){
@@ -409,7 +448,7 @@ quickPick.onDidChangeValue(function (){
 
 export function activate(context: vscode.ExtensionContext){
 
-	context.subscriptions.push(commands.registerCommand('js-relative-path.showinput', function(){
+	context.subscriptions.push(commands.registerCommand('js-relative-import.showinput', function(){
 		if(!projectRoot){
 			var [newProjectRoot, newOpenedFilename] = getPaths();
 			projectRoot = newProjectRoot;
