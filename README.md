@@ -1,1 +1,1 @@
-JS Relative Import
+# WIP: Relative Import Extension for VSCode

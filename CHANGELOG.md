@@ -1,1 +1,1 @@
-# WIP JS Relative import
+# WIP: Relative Import Extension for VSCode
