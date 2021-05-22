@@ -4,6 +4,8 @@ var gapTimeout : null | NodeJS.Timeout = null;
 
 function changeActiveItem(quickPick: vscode.QuickPick<vscode.QuickPickItem>, index: number, bottomGap = 6, timeout = 10){
 
+	index++;
+
 	if(gapTimeout !== null){
 		clearTimeout(gapTimeout);
 	}
