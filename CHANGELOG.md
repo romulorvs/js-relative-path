@@ -1,5 +1,8 @@
 # Changelog
 | Version | Date | Changelog |
 |---|---|---|
+| 1.0.4 | 23.05.21 | README Update. |
+| 1.0.3 | 23.05.21 | README Update. |
+| 1.0.2 | 23.05.21 | README Update. |
 | 1.0.1 | 23.05.21 | Version Update. |
 | 1.0.0 | 23.05.21 | Initial Release. |
