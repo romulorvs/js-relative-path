@@ -1,8 +1,5 @@
-node_modules
-
 .vscode/**
 .vscode-test/**
-out/test/**
 test/**
 src/**
 **/*.map
@@ -17,3 +14,18 @@ lib/**
 .github/**
 package-lock.json
 tslint.json
+
+node_modules/*
+
+# keep glob dependencies
+!node_modules/balanced-match
+!node_modules/brace-expansion
+!node_modules/concat-map
+!node_modules/fs.realpath
+!node_modules/glob
+!node_modules/inflight
+!node_modules/inherits
+!node_modules/minimatch
+!node_modules/once
+!node_modules/path-is-absolute
+!node_modules/wrappy

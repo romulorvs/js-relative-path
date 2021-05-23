@@ -1,5 +1,5 @@
 # JS Relative Import
-[![Total Installs](https://img.shields.io/vscode-marketplace/d/romulovsantos.jsrelativeimport.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=romulovsantos.jsrelativeimport) [![Avarage Rating](https://img.shields.io/vscode-marketplace/r/romulovsantos.jsrelativeimport.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=romulovsantos.jsrelativeimport) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/romulorvs/js-relative-import/)
+[![Total Installs](https://img.shields.io/vscode-marketplace/d/romulosantos.jsrelativeimport.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=romulosantos.jsrelativeimport) [![Avarage Rating](https://img.shields.io/vscode-marketplace/r/romulosantos.jsrelativeimport.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=romulosantos.jsrelativeimport) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/romulorvs/js-relative-import/)
 
 ---
 
