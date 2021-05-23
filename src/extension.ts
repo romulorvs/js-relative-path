@@ -106,18 +106,18 @@ var currentFileIndex = -1;
 var isFiltering: boolean | null = null; // null means the first filtering
 quickPick.busy = true;
 
-function reallyChangeActiveItem(){
-	if(projectRoot && openedFilename){
+function reallyChangeActiveItem() {
+	if(projectRoot && openedFilename) {
 		var openedFileId = openedFilename.replace(projectRoot, '');
-		if(typeof selectionFilesIndex[openedFileId] !== 'undefined'){
+		if(typeof selectionFilesIndex[openedFileId] !== 'undefined') {
 			currentFileIndex = selectionFilesIndex[openedFileId];
-			if(currentFileIndex >= 0){
+			if(currentFileIndex >= 0) {
 				changeActiveItem(quickPick, currentFileIndex);
 			}
 		}
 	}
 }
-function updateQuickPickItems(props = { forceUpdate: false}){
+function updateQuickPickItems(props: {forceUpdate?: boolean} = {forceUpdate: false}) {
 	var forceUpdate = props.forceUpdate;
 
 	if(quickPick.busy){
@@ -330,6 +330,16 @@ function getFileDataFromURL(url: string): [string,string,string] {
 	return [filenameWithoutExt, extension, filepathWithoutExt];
 }
 
+function normalizeFilename(fileWithoutExt: string, fileExtension: string){
+	return fileWithoutExt.replace(/[^\A-Za-z0-9_$]+/g, ' ').split(' ').reduce((total, current, index) => {
+		if(index === 0 && !['jsx','tsx'].includes(fileExtension)) {
+			return `${total}${current}`;
+		}
+		const camelCaseWord = current.charAt(0).toUpperCase() + current.slice(1);
+		return `${total}${camelCaseWord}`;
+	}, '');
+}
+
 function importFile(file: string, isDir: boolean = false){
 
 	if(isDir){
@@ -375,18 +385,11 @@ function importFile(file: string, isDir: boolean = false){
 		
 		var fileType = activeTextEditor.document.languageId;
 		var [fileWithoutExt, fileExtension, filepathWithoutExt] = getFileDataFromURL(importUrl);
-		fileWithoutExt = fileWithoutExt.replace(/[^\A-Za-z0-9_$]+/g, ' ').split(' ').reduce((total, current, index) => {
-			if(index === 0 && !['jsx','tsx'].includes(fileExtension)) {
-				return `${total}${current}`;
-			}
-			const camelCaseWord = current.charAt(0).toUpperCase() + current.slice(1);
-			return `${total}${camelCaseWord}`;
-		}, '');
 		
 		var isImportJS = false;
 		if(
-			(fileType === 'javascript' && ['js','jsx',].includes(fileExtension)) ||
-			(fileType === 'javascriptreact' && ['js','jsx'].includes(fileExtension)) ||
+			(fileType === 'javascript' && ['js'].includes(fileExtension)) ||
+			(fileType === 'javascriptreact' && ['js'].includes(fileExtension)) ||
 			(fileType === 'typescript' && ['js','jsx','ts','tsx'].includes(fileExtension)) ||
 			(fileType  === 'typescriptreact' && ['js','jsx','ts','tsx'].includes(fileExtension))
 		){
@@ -404,7 +407,23 @@ function importFile(file: string, isDir: boolean = false){
 			}
 		}
 
-		if(lineText.trim() || !isImportJS){ // if current line is not empty or imported file is not JS
+		fileWithoutExt = normalizeFilename(fileWithoutExt, fileExtension);
+
+		if(fileWithoutExt.toLowerCase() === 'index'){
+			if(importUrl.toLowerCase() !== `./index`){
+				let newImportUrl = importUrl;
+				newImportUrl = newImportUrl.substr(0, newImportUrl.lastIndexOf('/'));
+				const newFileWithoutExt = newImportUrl.substr(newImportUrl.lastIndexOf('/')+1);
+				if(newFileWithoutExt === '.' || newFileWithoutExt === '..'){
+					// do nothing
+				}else{
+					fileWithoutExt = newFileWithoutExt;
+					fileWithoutExt = normalizeFilename(fileWithoutExt, fileExtension);
+				}
+			}
+		}
+
+		if(lineText.trim()){ // if current line is not empty
 			editor.replace(activeTextEditor.selection, `'${importUrl}'`);
 		}else{ // if current line is empty
 			var firstCharPos = 0;
@@ -457,21 +476,22 @@ let importType: string | undefined;
 let context: ExtensionContext;
 function setImportType(value: any = ''){
 	importType = value;
-	context.globalState.update('@JSRelativeImport:ImportType', value);
+	context.globalState.update('@JSRImport:ImportType', value);
 }
 function changeImportType(){
-	if(importType === 'require') {
-		setImportType('import');
-		window.showInformationMessage('using "Import...From"');
-	}else {
-		setImportType('require');
-		window.showInformationMessage('using "Require"');
-	}
-
 	if(storedItems && storedItems.length > 0){
 		const item = storedItems[0] as any;
-		
+
 		if(item.filename === '%%import_change%%'){
+
+			if(importType === 'require') {
+				setImportType('import');
+				window.showInformationMessage('using "Import...From"');
+			} else {
+				setImportType('require');
+				window.showInformationMessage('using "Require"');
+			}
+
 			const firstStoredItem = {
 				...item,
 				label: getImportTypeLabel() 
@@ -479,7 +499,7 @@ function changeImportType(){
 
 			storedItems[0] = firstStoredItem;
 
-			updateQuickPickItems();
+			updateQuickPickItems({forceUpdate: true});
 		}
 	}
 
@@ -511,7 +531,7 @@ pickImportType.onDidAccept(() => {
 
 function runImportSelector(){
 	pickImportType.items = [
-		{ label: 'import... from', type: 'import' } as QuickPickItem,
+		{ label: 'import...from', type: 'import' } as QuickPickItem,
 		{ label: 'require', type: 'require' } as QuickPickItem,
 	];
 	pickImportType.show();
@@ -522,7 +542,7 @@ const runExtension = () => {
 		var [newProjectRoot, newOpenedFilename] = getPaths();
 		projectRoot = newProjectRoot;
 		openedFilename = newOpenedFilename;
-	}else{
+	} else {
 		var newOpenedFilename = getPaths()[1];
 		openedFilename = newOpenedFilename;
 	}
@@ -535,7 +555,7 @@ const runExtension = () => {
 export function activate(extContext: ExtensionContext) {
 	context = extContext;
 	
-	setImportType(context.globalState.get('@JSRelativeImport:ImportType'));
+	setImportType(context.globalState.get('@JSRImport:ImportType'));
 
 	context.subscriptions.push(commands.registerCommand('js-relative-import.showinput', () => {
 
