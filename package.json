@@ -1,9 +1,21 @@
 {
-	"name": "js-relative-import",
-	"displayName": "js-relative-import",
-	"description": "import js files with a tree view",
-	"version": "0.0.1",
-	"publisher": "RomuloVSantos",
+	"name": "JSRelativeImport",
+	"displayName": "JS Relative Import",
+	"description": "Import js files in a tree view",
+	"version": "1.0.0",
+	"publisher": "romulovsantos",
+	"author": {
+	  "name": "Romulo Santos",
+	  "email": "romulo.rvs@outlook.com",
+	  "url": "https://github.com/romulorvs"
+	},
+	"keywords": [
+	  "import",
+	  "import file",
+	  "import files",
+	  "javascript import",
+	  "relative import"
+	],
 	"license": "MIT License",
 	"repository": {
 		"type": "git",
@@ -19,11 +31,13 @@
 		"*"
 	],
 	"main": "./out/extension.js",
+	"icon": "images/icon.png",
+	"homepage": "https://github.com/romulorvs/js-relative-import",
 	"contributes": {
 		"commands": [
 			{
 				"command": "js-relative-import.showinput",
-				"title": "Relative Import Files",
+				"title": "JS Relative Import",
 				"category": "Import"
 			}
 		],

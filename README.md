@@ -1,1 +1,27 @@
-# WIP: Relative Import Extension for VSCode
+<h2>
+    <img width='150px' height='150px' alt="Logo JS Relative Import" title="#logo" src="./images/icon-150.png" />
+</h2>
+
+# JS Relative Import
+
+[![Total Installs](https://img.shields.io/vscode-marketplace/d/romulovsantos.JSRelativeImport.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) [![Avarage Rating](https://img.shields.io/vscode-marketplace/r/romulovsantos.JSRelativeImport.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/ritwickdey/vscode-live-server/) 
+<br>
+
+**Press Shift+Space and find the file you wish to import in a tree view.**
+<br>
+
+![tree view import demo](./images/treedemo.gif)
+
+**You can also search for the file you're looking for.**
+<br>
+
+![search import demo](./images/searchdemo.gif)
+
+## Installation
+Open VSCode and search for **JS Relative Import** on Extensions tab.
+
+## Changelog
+To check full changelog [click here](CHANGELOG.md).
+
+## LICENSE
+This extension is licensed under the [MIT License](LICENSE)
