@@ -3,6 +3,7 @@ import * as glob from 'glob';
 import getPaths from './utils/getPaths';
 import changeActiveItem from './utils/changeActiveItem';
 
+
 var projectRoot: string | null = null;
 var openedFilename: string | null = null;
 const deepness = 8; // 8 folder levels to search (root + 7)
