@@ -2,11 +2,10 @@
 	"name": "jsrelativeimport",
 	"displayName": "JS Relative Import",
 	"description": "Import JS files using a tree view",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"publisher": "romulosantos",
 	"author": {
 		"name": "Romulo Santos",
-		"email": "romulo.rvs@outlook.com",
 		"url": "https://github.com/romulorvs"
 	},
 	"keywords": [
