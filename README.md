@@ -7,7 +7,7 @@ An easier way to **navigate and find files** to import in your javascript projec
 
 ---
 
-Press **Shift+Space** and find the file you wish to import in a tree view.
+Press **Ctrl+Shift+Space** (if it don't work, press **Ctrl+Shift+P** and search for **JS Relative Import**) and find the file you wish to import in a tree view.
 <br />
 ![tree view import demo](./images/treedemo.gif)
 <br />
@@ -18,6 +18,7 @@ You can also **search** for the file you're looking for.
 
 ## Installation
 Open VSCode and search for **JS Relative Import** on Extensions tab.
+For a better experience, you can set a keyboard shortcut to this extension.
 
 ## Changelog
 To check full changelog [click here](CHANGELOG.md).
