@@ -1,16 +1,28 @@
 {
-	"name": "js-relative-import",
-	"displayName": "js-relative-import",
-	"description": "An easier way to find and import javascript/typescript files.",
-	"version": "0.0.1",
-	"publisher": "RomuloVSantos",
+	"name": "jsrelativeimport",
+	"displayName": "JS Relative Import",
+	"description": "Import JS files using a tree view",
+	"version": "1.0.6",
+	"publisher": "romulovsantos",
+	"author": {
+		"name": "Romulo Santos",
+		"email": "romulo.rvs@outlook.com",
+		"url": "https://github.com/romulorvs"
+	},
+	"keywords": [
+		"import",
+		"import file",
+		"import files",
+		"javascript import",
+		"relative import"
+	],
 	"license": "MIT License",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/romulorvs/js-relative-path"
+		"url": "https://github.com/romulorvs/js-relative-import"
 	},
 	"engines": {
-		"vscode": "^1.54.0"
+		"vscode": "^1.46.0"
 	},
 	"categories": [
 		"Other"
@@ -19,34 +31,39 @@
 		"*"
 	],
 	"main": "./out/extension.js",
+	"icon": "images/icon.png",
+	"homepage": "https://github.com/romulorvs/js-relative-import",
 	"contributes": {
 		"commands": [
 			{
 				"command": "js-relative-import.showinput",
-				"title": "Relative Import Files",
+				"title": "JS Relative Import",
 				"category": "Import"
 			}
 		],
 		"keybindings": [
 			{
 				"command": "js-relative-import.showinput",
-				"win": "shift+space",
-				"linux": "shift+space",
-				"mac": "shift+space"
+				"key": "ctrl+shift+space",
+				"mac": "ctrl+shift+space",
+				"when": "editorTextFocus"
 			}
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "yarn run compile",
+		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
-		"pretest": "yarn run compile && yarn run lint",
+		"pretest": "npm run compile && npm run lint",
 		"lint": "eslint src --ext ts",
 		"test": "node ./out/test/runTest.js"
 	},
-	"devDependencies": {
-		"@types/vscode": "^1.54.0",
+	"dependencies": {
 		"@types/glob": "^7.1.3",
+		"glob": "^7.1.6"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.46.0",
 		"@types/mocha": "^8.0.4",
 		"@types/node": "^12.11.7",
 		"eslint": "^7.19.0",
@@ -55,8 +72,5 @@
 		"mocha": "^8.2.1",
 		"typescript": "^4.1.3",
 		"vscode-test": "^1.5.0"
-	},
-	"dependencies": {
-		"glob": "^7.1.6"
 	}
 }

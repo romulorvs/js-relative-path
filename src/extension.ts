@@ -1,8 +1,8 @@
-import { commands, window,  QuickPickItem } from 'vscode';
-import * as vscode from 'vscode';
+import { commands, window, QuickPickItem, Selection, ExtensionContext } from 'vscode';
 import * as glob from 'glob';
 import getPaths from './utils/getPaths';
 import changeActiveItem from './utils/changeActiveItem';
+
 
 var projectRoot: string | null = null;
 var openedFilename: string | null = null;
@@ -43,8 +43,8 @@ var getDirectories = async function(callback: any){
 						projectRoot + '/webpack/**',
 						projectRoot + '/BUILD/**',
 						projectRoot + '/build/**',
-						projectRoot + '/PUBLIC/**',
-						projectRoot + '/public/**',
+						// projectRoot + '/PUBLIC/**',
+						// projectRoot + '/public/**',
 						projectRoot + '/OUT/**',
 						projectRoot + '/out/**',
 						projectRoot + '/DIST/**',
@@ -77,7 +77,7 @@ var getDirectories = async function(callback: any){
 		} catch (error) {
 			callback(error);		
 		}
-	}else{
+	} else {
 		callback(new Error('no project root dir found'));	
 	}
 };
@@ -107,18 +107,18 @@ var currentFileIndex = -1;
 var isFiltering: boolean | null = null; // null means the first filtering
 quickPick.busy = true;
 
-function reallyChangeActiveItem(){
-	if(projectRoot && openedFilename){
+function reallyChangeActiveItem() {
+	if(projectRoot && openedFilename) {
 		var openedFileId = openedFilename.replace(projectRoot, '');
-		if(typeof selectionFilesIndex[openedFileId] !== 'undefined'){
+		if(typeof selectionFilesIndex[openedFileId] !== 'undefined') {
 			currentFileIndex = selectionFilesIndex[openedFileId];
-			if(currentFileIndex >= 0){
+			if(currentFileIndex >= 0) {
 				changeActiveItem(quickPick, currentFileIndex);
 			}
 		}
 	}
 }
-function updateQuickPickItems(props = { forceUpdate: false}){
+function updateQuickPickItems(props: {forceUpdate?: boolean} = {forceUpdate: false}) {
 	var forceUpdate = props.forceUpdate;
 
 	if(quickPick.busy){
@@ -151,6 +151,12 @@ function updateQuickPickItems(props = { forceUpdate: false}){
 	}
 }
 
+const getImportTypeLabel = () => (
+	importType === 'require'
+		? 'change from "Require" to "Import...From"'
+		: 'change from "Import...From" to "Require"'
+);
+
 var fileData: ItemType[] = [];
 function setItemsFromFiles(files = storedFiles){
 
@@ -164,9 +170,9 @@ function setItemsFromFiles(files = storedFiles){
 
 		/**
 		 * To better sort the file's array, you should sort by the absolute filepath.
-		 * And for that to work properly, you need to set all the dir names in uppercase at the filepath,
-		 * and the filename to lowercase (this will help to keep the directories above them the files below).
-		 * pathToSort var will store this value.
+		 * And for that to work properly, you need to set all the dir names in uppercase
+		 * at the filepath, and the filename to lowercase (this will help to keep the
+		 * directories above them the files below). pathToSort var will store this value.
 		 */
 		var pathToSort = filename;
 		if(isDir){
@@ -206,9 +212,14 @@ function setItemsFromFiles(files = storedFiles){
 					: 1;
 	});
 
-	storedItems = [];
+	storedItems = [{
+		label: getImportTypeLabel(),
+		detail: '',
+		filename: '%%import_change%%',
+		isDir: false
+	} as QuickPickItem];
 	storedItemsFilter = [];
-	selectionFilesIndex = {};
+	selectionFilesIndex = {};	
 	fileData.forEach(function ({label, dir, file, isDir, ext}, index){
 		if(!projectRoot) {return;}
 
@@ -320,6 +331,16 @@ function getFileDataFromURL(url: string): [string,string,string] {
 	return [filenameWithoutExt, extension, filepathWithoutExt];
 }
 
+function normalizeFilename(fileWithoutExt: string, fileExtension: string){
+	return fileWithoutExt.replace(/[^\A-Za-z0-9_$]+/g, ' ').split(' ').reduce((total, current, index) => {
+		if(index === 0 && !['jsx','tsx'].includes(fileExtension)) {
+			return `${total}${current}`;
+		}
+		const camelCaseWord = current.charAt(0).toUpperCase() + current.slice(1);
+		return `${total}${camelCaseWord}`;
+	}, '');
+}
+
 function importFile(file: string, isDir: boolean = false){
 
 	if(isDir){
@@ -353,7 +374,7 @@ function importFile(file: string, isDir: boolean = false){
 		importUrl += fileArr.slice(ignoreFrom).join('/');
 	}
 
-	var activeTextEditor = vscode.window.activeTextEditor;
+	var activeTextEditor = window.activeTextEditor;
 	
 	quickPick.hide();
 
@@ -365,18 +386,11 @@ function importFile(file: string, isDir: boolean = false){
 		
 		var fileType = activeTextEditor.document.languageId;
 		var [fileWithoutExt, fileExtension, filepathWithoutExt] = getFileDataFromURL(importUrl);
-		fileWithoutExt = fileWithoutExt.replace(/[^\A-Za-z0-9_$]+/g, ' ').split(' ').reduce((total, current, index) => {
-			if(index === 0 && !['jsx','tsx'].includes(fileExtension)) {
-				return `${total}${current}`;
-			}
-			const camelCaseWord = current.charAt(0).toUpperCase() + current.slice(1);
-			return `${total}${camelCaseWord}`;
-		}, '');
 		
 		var isImportJS = false;
 		if(
-			(fileType === 'javascript' && ['js','jsx',].includes(fileExtension)) ||
-			(fileType === 'javascriptreact' && ['js','jsx'].includes(fileExtension)) ||
+			(fileType === 'javascript' && ['js'].includes(fileExtension)) ||
+			(fileType === 'javascriptreact' && ['js'].includes(fileExtension)) ||
 			(fileType === 'typescript' && ['js','jsx','ts','tsx'].includes(fileExtension)) ||
 			(fileType  === 'typescriptreact' && ['js','jsx','ts','tsx'].includes(fileExtension))
 		){
@@ -394,29 +408,52 @@ function importFile(file: string, isDir: boolean = false){
 			}
 		}
 
-		if(lineText.trim() || !isImportJS){ // if current line is not empty or imported file is not JS
+		fileWithoutExt = normalizeFilename(fileWithoutExt, fileExtension);
+
+		if(fileWithoutExt.toLowerCase() === 'index'){
+			if(importUrl.toLowerCase() !== `./index`){
+				let newImportUrl = importUrl;
+				newImportUrl = newImportUrl.substr(0, newImportUrl.lastIndexOf('/'));
+				const newFileWithoutExt = newImportUrl.substr(newImportUrl.lastIndexOf('/')+1);
+				if(newFileWithoutExt === '.' || newFileWithoutExt === '..'){
+					// do nothing
+				}else{
+					fileWithoutExt = newFileWithoutExt;
+					fileWithoutExt = normalizeFilename(fileWithoutExt, fileExtension);
+				}
+			}
+		}
+
+		if(lineText.trim()){ // if current line is not empty
 			editor.replace(activeTextEditor.selection, `'${importUrl}'`);
 		}else{ // if current line is empty
 			var firstCharPos = 0;
-			var latCharPos = 0;
+			var lastCharPos = 0;
 
 			// insert text on line start
-			activeTextEditor.selection = new vscode.Selection(
+			activeTextEditor.selection = new Selection(
 				lineNumber, firstCharPos, 
-				lineNumber, latCharPos
+				lineNumber, lastCharPos
 			);
 			
-			var importText = `import ${fileWithoutExt} from '${importUrl}';`;
+			if(importType === 'require') {
+				var importText = `const ${fileWithoutExt} = require('${importUrl}');`;
+				firstCharPos = 'const '.length,
+				lastCharPos = 'const '.length + fileWithoutExt.length;
+			} else {
+				var importText = `import ${fileWithoutExt} from '${importUrl}';`;
+				firstCharPos = 'import '.length,
+				lastCharPos = 'import '.length + fileWithoutExt.length;
+			}
+
 			editor.replace(activeTextEditor.selection, importText);
 
-			firstCharPos = 'import '.length,
-			latCharPos = 'import '.length + fileWithoutExt.length;
 			setTimeout(function (){
 				if(!activeTextEditor) {return;}
 
-				activeTextEditor.selection = new vscode.Selection(
+				activeTextEditor.selection = new Selection(
 					lineNumber, firstCharPos, 
-					lineNumber, latCharPos
+					lineNumber, lastCharPos
 				);
 			}, 10);
 		}
@@ -436,32 +473,99 @@ quickPick.onDidChangeActive(function (selection){
 	}
 });
 
+let importType: string | undefined;
+let context: ExtensionContext;
+function setImportType(value: any = ''){
+	importType = value;
+	context.globalState.update('@JSRImport:ImportType', value);
+}
+function changeImportType(){
+	if(storedItems && storedItems.length > 0){
+		const item = storedItems[0] as any;
+
+		if(item.filename === '%%import_change%%'){
+
+			if(importType === 'require') {
+				setImportType('import');
+				window.showInformationMessage('using "Import...From"');
+			} else {
+				setImportType('require');
+				window.showInformationMessage('using "Require"');
+			}
+
+			const firstStoredItem = {
+				...item,
+				label: getImportTypeLabel() 
+			} as QuickPickItem;
+
+			storedItems[0] = firstStoredItem;
+
+			updateQuickPickItems({forceUpdate: true});
+		}
+	}
+
+	quickPick.hide();
+}
+
 quickPick.onDidAccept(function(){
 	if(!currentFile) {return;}
 
-	importFile(currentFile.filename, currentFile.isDir);
+	if(currentFile.filename === '%%import_change%%'){
+		changeImportType();
+	} else {
+		importFile(currentFile.filename, currentFile.isDir);
+	}
 });
 
 quickPick.onDidChangeValue(function (){
 	updateQuickPickItems();
 });
 
-export function activate(context: vscode.ExtensionContext){
+var pickImportType = window.createQuickPick();
+pickImportType.placeholder = 'Choose the import method below (You can change it later):';
+pickImportType.onDidAccept(() => {
+	const { type } = pickImportType.selectedItems[0] as any;
+	setImportType(type);
+	pickImportType.dispose();
+	runExtension();
+});
 
-	context.subscriptions.push(commands.registerCommand('js-relative-import.showinput', function(){
-		if(!projectRoot){
-			var [newProjectRoot, newOpenedFilename] = getPaths();
-			projectRoot = newProjectRoot;
-			openedFilename = newOpenedFilename;
-		}else{
-			var newOpenedFilename = getPaths()[1];
-			openedFilename = newOpenedFilename;
-		}
-		quickPick.show();
-		loadItems();
-		// since quickPick.show() always clear the items, you have to force items update every time it is called
-		updateQuickPickItems({forceUpdate: true});
-	}));
+function runImportSelector(){
+	pickImportType.items = [
+		{ label: 'import...from', type: 'import' } as QuickPickItem,
+		{ label: 'require', type: 'require' } as QuickPickItem,
+	];
+	pickImportType.show();
+}
+
+const runExtension = () => {
+	if(!projectRoot){
+		var [newProjectRoot, newOpenedFilename] = getPaths();
+		projectRoot = newProjectRoot;
+		openedFilename = newOpenedFilename;
+	} else {
+		var newOpenedFilename = getPaths()[1];
+		openedFilename = newOpenedFilename;
+	}
+	quickPick.show();
+	loadItems();
+	// since quickPick.show() always clear the items, you have to force items update every time it is called
+	updateQuickPickItems({forceUpdate: true});
 };
 
-export function deactivate(){};
+export function activate(extContext: ExtensionContext) {
+	context = extContext;
+	
+	setImportType(context.globalState.get('@JSRImport:ImportType'));
+
+	context.subscriptions.push(commands.registerCommand('js-relative-import.showinput', () => {
+
+		if(!importType){
+			runImportSelector();
+		}else{
+			runExtension();
+		}
+	}));
+}
+
+export function deactivate() {}
